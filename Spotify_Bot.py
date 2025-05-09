@@ -8,16 +8,18 @@ import re
 import random
 import pickle
 import os.path
+import zipfile
 import threading
 import time as tt
 import numpy as np
 import tkinter as tk
 import firebase_admin
 from time import time
+
 import pyautogui as pyg
 from threading import Thread
 from tkinter import messagebox
-from selenium import webdriver
+from seleniumwire import webdriver
 #import undetected_chromedriver as UC
 from firebase_admin import credentials, db
 from selenium.webdriver.common.by import By
@@ -35,11 +37,16 @@ pyg.FAILSAFE= False
 #wincap=WindowCapture('Spotify - Web Player: Music for everyone - Google Chrome ')
 loop_time=time()
 time_space=None
-global SPOTIFY_USERNAME,SPOTIFY_PASSWORD
+global SPOTIFY_USERNAME,SPOTIFY_PASSWORD,proxy_host,proxy_port,proxy_pass,proxy_user,plugin_file,serial
 SPOTIFY_USERNAME = None
 SPOTIFY_PASSWORD=None
 SONG_URI = "https://open.spotify.com/playlist/5OVLNBfbD8TVEpIR9Y2tGF?si=Z_DVMPpfSKmF8GFSDkv-lQ"
 every_link=[]
+proxy_host = "your.proxy.host"      # e.g., 123.45.67.89
+proxy_port = 8080                   # e.g., 8000
+proxy_user = "yourUsername"
+proxy_pass = "yourPassword"
+plugin_file = "proxy_auth_plugin.zip"
 
 # Initialize Firebase with your credentials
 cred = credentials.Certificate("sporty-33cc0-firebase-adminsdk-v9b4v-7a9a3c806d.json")
@@ -502,31 +509,108 @@ def ch():
         wait()
         #through check
         
+def archive():
+    global SPOTIFY_USERNAME,SPOTIFY_PASSWORD,proxy_host,proxy_port,proxy_pass,proxy_user,plugin_file,serial
+    plugin_file = "proxy_auth_plugin"+serial+".zip"
+    manifest_json = """
+    {
+      "version": "1.0.0",
+      "manifest_version": 2,
+      "name": "Chrome Proxy",
+      "permissions": [
+        "proxy",
+        "tabs",
+        "unlimitedStorage",
+        "storage",
+        "<all_urls>",
+        "webRequest",
+        "webRequestBlocking"
+      ],
+      "background": {
+        "scripts": ["background.js"]
+      }
+    }
+    """
+
+    background_js = f"""
+    var config = {{
+      mode: "fixed_servers",
+      rules: {{
+        singleProxy: {{
+          scheme: "http",
+          host: "{proxy_host}",
+          port: parseInt({proxy_port})
+        }},
+        bypassList: ["localhost"]
+      }}
+    }};
+
+    chrome.proxy.settings.set({{value: config, scope: "regular"}}, function() {{}});
+
+    chrome.webRequest.onAuthRequired.addListener(
+      function(details) {{
+        return {{
+          authCredentials: {{
+            username: "{proxy_user}",
+            password: "{proxy_pass}"
+          }}
+        }};
+      }},
+      {{urls: ["<all_urls>"]}},
+      ["blocking"]
+    );
+    """
+
+    # === Write the extension files into a zip ===
+    with zipfile.ZipFile(plugin_file, 'w') as zp:
+        zp.writestr("manifest.json", manifest_json)
+        zp.writestr("background.js", background_js)
+    return plugin_file
+
+
 def initial():
     global driver
-    
-    
+    global SPOTIFY_USERNAME,SPOTIFY_PASSWORD,proxy_host,proxy_port,proxy_pass,proxy_user,serial
+    plugin_file=archive()
+    proxy_url = f"http://{proxy_user}:{proxy_pass}@{proxy_host}:{proxy_port}"
+    print(proxy_url)
+    seleniumwire_options = {
+    "proxy": {
+        "http": proxy_url,
+        "https": proxy_url
+    },
+    }
+
     #for the future       driver = UC.Chrome()
 
     #service = webdriver.ChromeService(executable_path = 'chromedriver.exe',option=option)
     #driver = webdriver.Chrome(service=service)
 
 
-    chrome_options = webdriver.ChromeOptions()
-
+    chrome_options = Options()
+    a = "proxy_host:proxy_port:proxy_user:proxy_pass"
+    chrome_options.add_argument('--proxy-server=:{}'.format(a))
     chrome_options.add_experimental_option("useAutomationExtension", False)
-
     chrome_options.add_experimental_option("excludeSwitches",["enable-automation"])
+    
     
     service_obj = Service("chromedriver.exe")
 
     driver = webdriver.Chrome(options=chrome_options,service=service_obj)
+
+    #driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()),seleniumwire_options=seleniumwire_options,options=chrome_options)
+    
     tt.sleep(3)
     driver.maximize_window()
 
 
     driver.get('https://www.google.com/')
+    wait()
+    driver.get("https://httpbin.org/ip")
+    wait()
+    print("ip is     "+driver.find_element(By.XPATH, "//body").text)
     ch()
+    
     link()
     driver.get('https://www.spotify.com/')
     for i in range(1,10):
@@ -547,75 +631,9 @@ def initial():
 
 
 
-def cred():
-    def save_credentials():
-        username = entry_username.get()
-        password = entry_password.get()
-        if username.strip() == '' or password.strip() == '':
-            messagebox.showerror("Error", "Please enter both username and password.")
-            return
-
-        with open("credentials.txt", "w") as file:
-            file.write(f"{username}\n{password}")
-        messagebox.showinfo("Success", "Credentials saved successfully.")
-
-    def search_credentials():
-        if os.path.exists("credentials.txt"):
-            with open("credentials.txt", "r") as file:
-                content = file.read()
-            messagebox.showinfo("Credentials Found", content)
-        else:
-            messagebox.showinfo("Credentials Not Found", "No credentials found.")
-
-    # Create the tkinter window
-    window = tk.Tk()
-    window.title("Save and Search Credentials")
-
-    # Username Label and Entry
-    label_username = tk.Label(window, text="Username:")
-    label_username.pack()
-    entry_username = tk.Entry(window)
-    entry_username.pack()
-
-    # Password Label and Entry
-    label_password = tk.Label(window, text="Password:")
-    label_password.pack()
-    entry_password = tk.Entry(window, show="*")
-    entry_password.pack()
-
-    # Save Button
-    button_save = tk.Button(window, text="Save Credentials", command=save_credentials)
-    button_save.pack()
-
-    # Search Button
-    button_search = tk.Button(window, text="Search Credentials", command=search_credentials)
-    button_search.pack()
-
-    window.mainloop()
 
 def init():
     global SPOTIFY_USERNAME,SPOTIFY_PASSWORD
-
-    
-    def read_credentials_from_file(file_path):
-        global SPOTIFY_USERNAME,SPOTIFY_PASSWORD
-            
-        try:
-            with open(file_path, "r") as file:
-                lines = file.readlines()
-                if len(lines) >= 2:
-                    SPOTIFY_USERNAME = lines[0].strip()
-                    SPOTIFY_PASSWORD = lines[1].strip()
-                    print(SPOTIFY_USERNAME+"   "+SPOTIFY_PASSWORD)
-                else:
-                    print("Error: Username or password missing in the file.")
-        except FileNotFoundError:
-            print("Error: File not found.")
-
-    # Example usage:
-    file_path = "credentials.txt"  # Replace with the actual file path
-    read_credentials_from_file(file_path)
-
     # Checking if credentials were read successfully
     if SPOTIFY_USERNAME is not None and SPOTIFY_PASSWORD is not None:
         print("Spotify Username:", SPOTIFY_USERNAME)
@@ -624,7 +642,19 @@ def init():
         print("Error: Unable to read Spotify credentials from file.")
     
     
-def check():
+def check(sp_us,sp_pa,pr_h,pr_p,pr_pa,pr_us,se):
+    
+    global SPOTIFY_USERNAME,SPOTIFY_PASSWORD,proxy_host,proxy_port,proxy_pass,proxy_user,plugin_file,serial    
+    proxy_host = pr_h    # e.g., 123.45.67.89
+    proxy_port = pr_p                   # e.g., 8000
+    proxy_user = pr_us
+    proxy_pass = pr_pa
+    serial=se
+    plugin_file = "proxy_auth_plugin"+serial+".zip"
+    SPOTIFY_USERNAME=sp_us
+    SPOTIFY_PASSWORD=sp_pa
+    
+    
     
     def file_check(file_path):
         if os.path.exists(file_path):
@@ -651,7 +681,7 @@ def check():
     file_path = "credentials.txt"
     file_check(file_path)
 
-check()
+#check(a,b,c,d,e,f,g)
 
 
 '''
