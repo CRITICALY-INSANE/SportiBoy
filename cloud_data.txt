@@ -6,6 +6,6 @@ Holiday Vacation,3
 Hunger,3
 Nice Ice,4
 Painted Sky,1
-Silent Serenade,3
+Silent Serenade,4
 Summer Moon,2
 Whispers of the Wind,6
