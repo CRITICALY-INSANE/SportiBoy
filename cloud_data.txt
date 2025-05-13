@@ -7,5 +7,5 @@ Hunger,3
 Nice Ice,4
 Painted Sky,1
 Silent Serenade,4
-Summer Moon,2
+Summer Moon,3
 Whispers of the Wind,6
