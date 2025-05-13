@@ -15,7 +15,7 @@ import numpy as np
 import tkinter as tk
 import firebase_admin
 from time import time
-
+import git_guy as gg
 import pyautogui as pyg
 from threading import Thread
 from tkinter import messagebox
@@ -367,23 +367,10 @@ def update_file(input_text, file_path):
             return
     
 def online():
-    global SPOTIFY_USERNAME,strm
-    user=str(SPOTIFY_USERNAME)
-    strm=str(strm)
-    user=re.sub(r'[@.]', '_', user)
-    print(user)
-    #
-    print(strm)
-    data = {
-        #user: strm,
-        user: strm,
-    }
-    if 'Spotify' in ref.get():
-    # If it exists, update the data under it
-        ref.child('Spotify').update(data)
-    else:
-    # If it doesn't exist, create it and add the new data
-        ref.child('Spotify').set(data)
+    with open('spotify_report.txt', 'r', encoding='utf-8') as file:
+        content = file.read()
+        gg.new_con(content)
+    
 
 
 
@@ -398,6 +385,7 @@ def save(sng_nme):
         thread1 = Thread(target = add_second_value,)
         thread1.start()
         thread1.join()
+        
 
         thread2 = Thread(target = online)
         thread2.start()
