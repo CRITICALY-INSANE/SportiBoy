@@ -6,6 +6,7 @@ import requests
 global GITHUB_TOKEN,REPO_OWNER,REPO_NAME,FILE_PATH,LOCAL_FILE,NEW_CONTENT
 # === CONFIGURATION ===
 GITHUB_TOKEN = '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'  # Replace with your GitHub token
+#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
 REPO_OWNER = 'CRITICALY-INSANE'
 REPO_NAME = 'SportiBoy'
 FILE_PATH = 'cloud_data.txt'  # GitHub repo path
