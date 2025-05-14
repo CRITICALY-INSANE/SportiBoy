@@ -580,12 +580,12 @@ def initial():
     chrome_options.add_argument('--proxy-server=:{}'.format(a))
     chrome_options.add_experimental_option("useAutomationExtension", False)
     chrome_options.add_experimental_option("excludeSwitches",["enable-automation"])
-    
+
     
     service_obj = Service("chromedriver.exe")
-
+    #for linux
+    #service_obj = Service("/usr/bin/chromedriver")
     driver = webdriver.Chrome(options=chrome_options,service=service_obj)
-
     #driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()),seleniumwire_options=seleniumwire_options,options=chrome_options)
     
     tt.sleep(3)
