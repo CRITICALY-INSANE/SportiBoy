@@ -41,6 +41,7 @@ global SPOTIFY_USERNAME,SPOTIFY_PASSWORD,proxy_host,proxy_port,proxy_pass,proxy_
 SPOTIFY_USERNAME = None
 SPOTIFY_PASSWORD=None
 SONG_URI = "https://open.spotify.com/playlist/5OVLNBfbD8TVEpIR9Y2tGF?si=Z_DVMPpfSKmF8GFSDkv-lQ"
+
 every_link=[]
 proxy_host = "your.proxy.host"      # e.g., 123.45.67.89
 proxy_port = 8080                   # e.g., 8000
